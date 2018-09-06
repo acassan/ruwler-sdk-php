@@ -1,0 +1,22 @@
+{
+    "name": "ruwler/ruwler-sdk-php",
+    "homepage": "https://api.ruwler.io",
+    "description" : "Ruwler SDK PHP",
+    "keywords": ["ruwler-sdk-php", "ruwler", "sdk-php", "ruwler-php"],
+    "license": "Apache-2.0",
+    "require": {
+        "php": "^5.4 || ^7.0",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ruwler\\": "src/"
+        }
+    },
+    "config": {
+        "preferred-install": "dist"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
