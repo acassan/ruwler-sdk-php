@@ -40,22 +40,16 @@ class RuwlerSdk
     private $ch; // Curl handler
 
     /**
-     * Ruwler constructor.
-     *
+     * RuwlerSdk constructor.
+     * @param $apiKey
      * @param array $options
-     *
      * @throws ConfigurationException
-     * @throws MissingArgumentException
      */
-    public function __construct(array $options)
+    public function __construct($apiKey, array $options = [])
     {
         $this->checkCompatibility();
 
-        if (!isset($options['api_key'])) {
-            throw new MissingArgumentException('You must provide an api key');
-        }
-
-        $this->apiKey = $options['api_key'];
+        $this->apiKey = $apiKey;
 
         foreach ($options as $key => $value) {
             // only set if valid setting/option

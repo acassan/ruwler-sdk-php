@@ -5,7 +5,7 @@
     "keywords": ["ruwler-sdk-php", "ruwler", "sdk-php", "ruwler-php"],
     "license": "Apache-2.0",
     "require": {
-        "php": "^5.4 || ^7.0",
+        "php": "^7.1",
         "ext-curl": "*",
         "ext-json": "*"
     },
