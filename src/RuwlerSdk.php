@@ -4,10 +4,8 @@ namespace Ruwler;
 
 use Ruwler\Exception\ConfigurationException;
 use Ruwler\Exception\ConnectionException;
-use Ruwler\Exception\MissingArgumentException;
-use Ruwler\Exception\RuwlerException;
 use Psr\Log\LoggerInterface;
-use Ruwler\Model\Request\SendTransactionalRequest;
+use Ruwler\Model\ApiResponse;
 
 /**
  * Class RuwlerSdk
@@ -35,21 +33,16 @@ class RuwlerSdk
     private $logger = null;
 
     /**
-     * @var
+     *  Curl handler
      */
-    private $ch; // Curl handler
+    private $ch;
 
-    /**
-     * RuwlerSdk constructor.
-     * @param $apiKey
-     * @param array $options
-     * @throws ConfigurationException
-     */
-    public function __construct($apiKey, array $options = [])
+    public function __construct($apiKey, array $options = [], LoggerInterface $logger = null)
     {
         $this->checkCompatibility();
 
         $this->apiKey = $apiKey;
+        $this->logger = $logger;
 
         foreach ($options as $key => $value) {
             // only set if valid setting/option
@@ -59,47 +52,155 @@ class RuwlerSdk
         }
     }
 
-    /**
-     * @param array $options
-     *
-     * @return array
-     *
-     * @throws ConfigurationException
-     * @throws ConnectionException
-     * @throws MissingArgumentException
-     * @throws RuwlerException
-     */
-    public function createProject(array $options)
+    /************************************************************************
+     *                  Projects RESOURCE
+     ************************************************************************/
+
+    public function getProjects(array $filters = []): ApiResponse
     {
-        if (is_null($options['name'])) {
-            throw new MissingArgumentException('You must provide the name of the campaign');
-        }
-
-        $body = [
-            'name' => $options['name'],
-        ];
-
-        $ch = $this->createCurl('POST', '/projects', $body);
-        $response = $this->execCurl($ch);
-
-        return $response;
+        return $this->send('GET', '/projects', null, $filters);
     }
 
-    /**
-     * @param SendTransactionalRequest $request
-     * @throws ConfigurationException
-     * @throws ConnectionException
-     * @throws RuwlerException
-     */
-    public function sendTransactionalMail(SendTransactionalRequest $request)
+    public function createProject(array $content): ApiResponse
     {
-        $ch = $this->createCurl('POST', '/send_transactional', $request->getBody());
-        $this->execCurl($ch);
+        return $this->send('POST', '/projects', $content);
     }
 
-    /**
-     * @throws ConfigurationException
-     */
+    public function getProject($projectId): ApiResponse
+    {
+        return $this->send('GET', '/projects/'. $projectId);
+    }
+
+    public function updateProject($projectId, array $content = []): ApiResponse
+    {
+        return $this->send('PUT', '/projects/'. $projectId, $content);
+    }
+
+    public function deleteProject($projectId): ApiResponse
+    {
+        return $this->send('DELETE', '/projects/'. $projectId);
+    }
+
+
+    /************************************************************************
+     *                  Campaigns RESOURCE
+     ************************************************************************/
+
+    public function getCampaigns(array $filters = []): ApiResponse
+    {
+        return $this->send('GET', '/campaigns', null, $filters);
+    }
+
+    public function createCampaign(array $content): ApiResponse
+    {
+        return $this->send('POST', '/campaigns', $content);
+    }
+
+    public function getCampaign($campaignId): ApiResponse
+    {
+        return $this->send('GET', '/campaigns/'. $campaignId);
+    }
+
+    public function updateCampaign($campaignId, array $content = []): ApiResponse
+    {
+        return $this->send('PUT', '/campaigns/'. $campaignId, $content);
+    }
+
+    public function deleteCampaign($campaignId): ApiResponse
+    {
+        return $this->send('DELETE', '/campaigns/'. $campaignId);
+    }
+
+
+    /************************************************************************
+     *                  Channels RESOURCE
+     ************************************************************************/
+
+    public function getChannels(array $filters = []): ApiResponse
+    {
+        return $this->send('GET', '/channels', null, $filters);
+    }
+
+    public function createChannel(array $content): ApiResponse
+    {
+        return $this->send('POST', '/channels', $content);
+    }
+
+    public function getChannel($channelId): ApiResponse
+    {
+        return $this->send('GET', '/channels/'. $channelId);
+    }
+
+    public function updateChannel($channelId, array $content = []): ApiResponse
+    {
+        return $this->send('PUT', '/channels/'. $channelId, $content);
+    }
+
+    public function deleteChannel($channelId): ApiResponse
+    {
+        return $this->send('DELETE', '/channels/'. $channelId);
+    }
+
+
+    /************************************************************************
+     *                  Providers RESOURCE
+     ************************************************************************/
+
+    public function getProviders(array $filters = []): ApiResponse
+    {
+        return $this->send('GET', '/providers', null, $filters);
+    }
+
+    public function getProvider($providerId): ApiResponse
+    {
+        return $this->send('GET', '/providers/'. $providerId);
+    }
+
+
+    /************************************************************************
+     *                  CampaignMessages RESOURCE
+     ************************************************************************/
+
+    public function getCampaignMessages(array $filters = []): ApiResponse
+    {
+        return $this->send('GET', '/campaign_messages', null, $filters);
+    }
+
+    public function createCampaignMessage(array $content): ApiResponse
+    {
+        return $this->send('POST', '/campaign_messages', $content);
+    }
+
+    public function getCampaignMessage($campaignMessageId): ApiResponse
+    {
+        return $this->send('GET', '/campaign_messages/'. $campaignMessageId);
+    }
+
+    public function updateCampaignMessage($campaignMessageId, array $content = []): ApiResponse
+    {
+        return $this->send('PUT', '/campaign_messages/'. $campaignMessageId, $content);
+    }
+
+    public function deleteCampaignMessage($campaignMessageId): ApiResponse
+    {
+        return $this->send('DELETE', '/campaign_messages/'. $campaignMessageId);
+    }
+
+
+    /************************************************************************
+     *                  MAILS RESOURCE
+     ************************************************************************/
+
+    public function sendMail(array $body): ApiResponse
+    {
+        return $this->send('POST', 'mails', $body);
+    }
+
+
+    /************************************************************************
+     *                  TOOLS
+     ************************************************************************/
+
     protected function checkCompatibility()
     {
         if (!extension_loaded('curl')) {
@@ -111,10 +212,6 @@ class RuwlerSdk
         }
     }
 
-    /**
-     * @param LoggerInterface $logger
-     * @return RuwlerSdk
-     */
     public function setLogger(LoggerInterface $logger): self
     {
         $this->logger = $logger;
@@ -122,34 +219,28 @@ class RuwlerSdk
         return $this;
     }
 
-    /**
-     * @param $msg
-     * @param string $level
-     * @return RuwlerSdk
-     */
     protected function log($msg, $level = 'info'): self
     {
         if (false === is_null($this->logger)) {
-            $this->logger->log($level, 'Ruwler API: '.$msg);
+            $this->logger->log($level, 'Ruwler Sdk: '.$msg);
         }
 
         return $this;
     }
 
-    /**
-     * @param $request_method
-     * @param $path
-     * @param null  $body
-     * @param array $query_params
-     *
-     * @return resource
-     *
-     * @throws ConfigurationException
-     */
-    protected function createCurl($request_method, $path, $body = null, $query_params = [])
+    public function send($method, $path, $body = null, $queryParams = []): ApiResponse
+    {
+        // Build and send CURL
+        $ch = $this->createCurl($method, $path, $body, $queryParams);
+        $response = $this->execCurl($ch);
+
+        return $response;
+    }
+
+    protected function createCurl($method, $path, $body = null, $queryParams = [])
     {
         $full_url = sprintf('%s://%s%s', $this->settings['scheme'], $this->settings['host'], $path);
-        $query_string = http_build_query($query_params);
+        $query_string = http_build_query($queryParams);
         $final_url = $full_url.'?'.$query_string;
 
         $this->log('createCurl( '.$final_url.' )');
@@ -178,7 +269,7 @@ class RuwlerSdk
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->settings['timeout']);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $request_method);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
 
         if (!is_null($body)) {
             $json_encoded_body = json_encode($body);
@@ -195,36 +286,21 @@ class RuwlerSdk
         return $ch;
     }
 
-    /**
-     * @param $ch
-     *
-     * @return array
-     *
-     * @throws ConnectionException
-     * @throws RuwlerException
-     */
-    protected function execCurl($ch)
+    protected function execCurl($ch): ApiResponse
     {
-        $response = [];
-
-        $response['body'] = json_decode(curl_exec($ch), true);
-
-        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $response['status'] = $status;
+        $content = json_decode(curl_exec($ch), true);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         // inform the user of a connection failure
-        if (0 == $status || false === $response['body']) {
+        if (0 == $code || false === $content) {
             throw new ConnectionException(curl_error($ch));
         }
 
-        // or an error response from Chatkit
-        if ($status >= 400) {
-            $this->log('ERROR: execCurl error: '.print_r($response, true));
-            throw (new RuwlerException($response['body']['hydra:description'], $status))->setBody($response['body']);
-        }
+        $apiResponse = new ApiResponse($code, $content);
 
-        $this->log('INFO: execCurl response: '.print_r($response, true));
+        $this->log('INFO: execCurl code: '.print_r($code, true));
+        $this->log('INFO: execCurl body: '.print_r($content, true));
 
-        return $response;
+        return $apiResponse;
     }
 }
