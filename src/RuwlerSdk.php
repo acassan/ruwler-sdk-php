@@ -81,37 +81,6 @@ class RuwlerSdk
         return $this->send('DELETE', '/projects/'. $projectId);
     }
 
-
-    /************************************************************************
-     *                  Campaigns RESOURCE
-     ************************************************************************/
-
-    public function getCampaigns(array $filters = []): ApiResponse
-    {
-        return $this->send('GET', '/campaigns', null, $filters);
-    }
-
-    public function createCampaign(array $content): ApiResponse
-    {
-        return $this->send('POST', '/campaigns', $content);
-    }
-
-    public function getCampaign($campaignId): ApiResponse
-    {
-        return $this->send('GET', '/campaigns/'. $campaignId);
-    }
-
-    public function updateCampaign($campaignId, array $content = []): ApiResponse
-    {
-        return $this->send('PUT', '/campaigns/'. $campaignId, $content);
-    }
-
-    public function deleteCampaign($campaignId): ApiResponse
-    {
-        return $this->send('DELETE', '/campaigns/'. $campaignId);
-    }
-
-
     /************************************************************************
      *                  Channels RESOURCE
      ************************************************************************/
@@ -158,42 +127,32 @@ class RuwlerSdk
 
 
     /************************************************************************
-     *                  CampaignMessages RESOURCE
+     *                  Templstes RESOURCE
      ************************************************************************/
 
-    public function getCampaignMessages(array $filters = []): ApiResponse
+    public function getTemplates(array $filters = []): ApiResponse
     {
-        return $this->send('GET', '/campaign_messages', null, $filters);
+        return $this->send('GET', '/templates', null, $filters);
     }
 
-    public function createCampaignMessage(array $content): ApiResponse
+    public function createTemplate(array $content): ApiResponse
     {
-        return $this->send('POST', '/campaign_messages', $content);
+        return $this->send('POST', '/templates', $content);
     }
 
-    public function getCampaignMessage($campaignMessageId): ApiResponse
+    public function getTemplate($templateId): ApiResponse
     {
-        return $this->send('GET', '/campaign_messages/'. $campaignMessageId);
+        return $this->send('GET', '/templates/'. $templateId);
     }
 
-    public function updateCampaignMessage($campaignMessageId, array $content = []): ApiResponse
+    public function updateTemplate($templateId, array $content = []): ApiResponse
     {
-        return $this->send('PUT', '/campaign_messages/'. $campaignMessageId, $content);
+        return $this->send('PUT', '/templates/'. $templateId, $content);
     }
 
-    public function deleteCampaignMessage($campaignMessageId): ApiResponse
+    public function deleteTemplate($templateId): ApiResponse
     {
-        return $this->send('DELETE', '/campaign_messages/'. $campaignMessageId);
-    }
-
-
-    /************************************************************************
-     *                  MAILS RESOURCE
-     ************************************************************************/
-
-    public function sendMail(array $body): ApiResponse
-    {
-        return $this->send('POST', 'mails', $body);
+        return $this->send('DELETE', '/templates/'. $templateId);
     }
 
 
@@ -201,6 +160,9 @@ class RuwlerSdk
      *                  TOOLS
      ************************************************************************/
 
+    /**
+     * @throws ConfigurationException
+     */
     protected function checkCompatibility()
     {
         if (!extension_loaded('curl')) {
