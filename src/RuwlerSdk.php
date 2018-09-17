@@ -5,6 +5,7 @@ namespace Ruwler;
 use Ruwler\Exception\ConfigurationException;
 use Ruwler\Exception\ConnectionException;
 use Psr\Log\LoggerInterface;
+use Ruwler\Exception\InvalidFormatException;
 use Ruwler\Model\ApiResponse;
 
 /**
@@ -13,9 +14,14 @@ use Ruwler\Model\ApiResponse;
  */
 class RuwlerSdk
 {
+    public const FORMAT_JSON_LD     = 'jsonld';
+    public const FORMAT_JSON        = 'json';
+    public const FORMAT_HTML        = 'html';
+
     private $settings = [
         'scheme' => 'https',
         'host' => 'api.ruwler.io',
+        'format' => 'json',
         'port' => 80,
         'timeout' => 30,
         'debug' => false,
@@ -236,7 +242,8 @@ class RuwlerSdk
         // Set cURL opts and execute request
         curl_setopt($ch, CURLOPT_URL, $final_url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
+            sprintf('Content-Type: %s', $this->getContentType()),
+            sprintf('Accept: %s', $this->getContentType()),
             sprintf('Authorization: %s', $this->apiKey),
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -274,5 +281,26 @@ class RuwlerSdk
         $this->log('INFO: execCurl body: '.print_r($content, true));
 
         return $apiResponse;
+    }
+
+    /**
+     * @return string
+     * @throws InvalidFormatException
+     */
+    protected function getContentType()
+    {
+        switch($this->settings['format']) {
+            case self::FORMAT_JSON_LD:
+                return 'application/ld+json';
+                break;
+            case self::FORMAT_JSON:
+                return 'application/json';
+            break;
+            case self::FORMAT_HTML:
+                return 'text/html';
+            break;
+            default:
+                throw new InvalidFormatException();
+        }
     }
 }
