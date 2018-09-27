@@ -21,7 +21,7 @@ class RuwlerSdk
     private $settings = [
         'scheme' => 'https',
         'host' => 'api.ruwler.io',
-        'format' => 'json',
+        'format' => self::FORMAT_JSON_LD,
         'port' => 80,
         'timeout' => 30,
         'debug' => false,
