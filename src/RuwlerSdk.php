@@ -6,7 +6,9 @@ use Ruwler\Exception\ConfigurationException;
 use Ruwler\Exception\ConnectionException;
 use Psr\Log\LoggerInterface;
 use Ruwler\Exception\InvalidFormatException;
+use Ruwler\Exception\UnauthorizedException;
 use Ruwler\Model\ApiResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class RuwlerSdk
@@ -22,7 +24,6 @@ class RuwlerSdk
         'scheme' => 'https',
         'host' => 'api.ruwler.io',
         'format' => self::FORMAT_JSON_LD,
-        'port' => 80,
         'timeout' => 30,
         'debug' => false,
         'curl_options' => [],
@@ -36,14 +37,14 @@ class RuwlerSdk
     /**
      * @var LoggerInterface
      */
-    private $logger = null;
+    private $logger;
 
     /**
      *  Curl handler
      */
     private $ch;
 
-    public function __construct($apiKey, array $options = [], LoggerInterface $logger = null)
+    public function __construct($apiKey = null, array $options = [], LoggerInterface $logger = null)
     {
         $this->checkCompatibility();
 
@@ -56,6 +57,16 @@ class RuwlerSdk
                 $this->settings[$key] = $value;
             }
         }
+    }
+
+
+    /************************************************************************
+     *                  Security RESOURCE
+     ************************************************************************/
+
+    public function login(string $email, string $password): ApiResponse
+    {
+        return $this->send('POST', '/login_check', ['email' => $email, 'password' => $password]);
     }
 
     /************************************************************************
@@ -85,6 +96,35 @@ class RuwlerSdk
     public function deleteProject($projectId): ApiResponse
     {
         return $this->send('DELETE', '/projects/'. $projectId);
+    }
+
+    /************************************************************************
+     *                  Campaigns RESOURCE
+     ************************************************************************/
+
+    public function getCampaigns(array $filters = []): ApiResponse
+    {
+        return $this->send('GET', '/campaigns', null, $filters);
+    }
+
+    public function createCampaign(array $content): ApiResponse
+    {
+        return $this->send('POST', '/campaigns', $content);
+    }
+
+    public function getCampaign($campaignId): ApiResponse
+    {
+        return $this->send('GET', '/campaigns/'. $campaignId);
+    }
+
+    public function updateCampaign($campaignId, array $content = []): ApiResponse
+    {
+        return $this->send('PUT', '/campaigns/'. $campaignId, $content);
+    }
+
+    public function deleteCampaign($campaignId): ApiResponse
+    {
+        return $this->send('DELETE', '/campaigns/'. $campaignId);
     }
 
     /************************************************************************
@@ -143,7 +183,7 @@ class RuwlerSdk
 
 
     /************************************************************************
-     *                  Templstes RESOURCE
+     *                  Templates RESOURCE
      ************************************************************************/
 
     public function getTemplates(array $filters = []): ApiResponse
@@ -210,9 +250,8 @@ class RuwlerSdk
     {
         // Build and send CURL
         $ch = $this->createCurl($method, $path, $body, $queryParams);
-        $response = $this->execCurl($ch);
 
-        return $response;
+        return $this->execCurl($ch);
     }
 
     protected function createCurl($method, $path, $body = null, $queryParams = [])
@@ -244,7 +283,7 @@ class RuwlerSdk
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             sprintf('Content-Type: %s', $this->getContentType()),
             sprintf('Accept: %s', $this->getContentType()),
-            sprintf('Authorization: %s', $this->apiKey),
+            sprintf('Authorization: Bearer %s', $this->apiKey),
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->settings['timeout']);
@@ -277,6 +316,10 @@ class RuwlerSdk
 
         $apiResponse = new ApiResponse($code, $content);
 
+        if ($apiResponse->getCode() === Response::HTTP_UNAUTHORIZED) {
+            throw new UnauthorizedException();
+        }
+
         $this->log('INFO: execCurl code: '.print_r($code, true));
         $this->log('INFO: execCurl body: '.print_r($content, true));
 
@@ -302,5 +345,12 @@ class RuwlerSdk
             default:
                 throw new InvalidFormatException();
         }
+    }
+
+    public function setApiKey(string $apiKey): self
+    {
+        $this->apiKey = $apiKey;
+
+        return $this;
     }
 }
