@@ -5,27 +5,29 @@ namespace Ruwler;
 use Ruwler\Exception\ConfigurationException;
 use Ruwler\Exception\ConnectionException;
 use Psr\Log\LoggerInterface;
+use Ruwler\Exception\InvalidAuthModeException;
 use Ruwler\Exception\InvalidFormatException;
 use Ruwler\Exception\UnauthorizedException;
 use Ruwler\Model\ApiResponse;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Class RuwlerSdk
- * @package Ruwler
- */
 class RuwlerSdk
 {
     public const FORMAT_JSON_LD     = 'jsonld';
     public const FORMAT_JSON        = 'json';
     public const FORMAT_HTML        = 'html';
 
+    public const AUTH_MODE_APIKEY   = 'apikey';
+    public const AUTH_MODE_TOKEN    = 'token';
+
+    public const MAX_ITEMS_PER_PAGE = 30;
+
     private $settings = [
-        'scheme' => 'https',
-        'host' => 'api.ruwler.io',
+        'host' => 'https://api.ruwler.io',
         'format' => self::FORMAT_JSON_LD,
         'timeout' => 30,
         'debug' => false,
+        'auth_mode' => self::AUTH_MODE_APIKEY,
         'curl_options' => [],
     ];
 
@@ -67,6 +69,35 @@ class RuwlerSdk
     public function login(string $email, string $password): ApiResponse
     {
         return $this->send('POST', '/login_check', ['email' => $email, 'password' => $password]);
+    }
+
+    /************************************************************************
+     *                  Tokens RESOURCE
+     ************************************************************************/
+
+    public function getTokens(array $filters = []): ApiResponse
+    {
+        return $this->send('GET', '/tokens', null, $filters);
+    }
+
+    public function createToken(array $content): ApiResponse
+    {
+        return $this->send('POST', '/tokens', $content);
+    }
+
+    public function getToken($tokenId): ApiResponse
+    {
+        return $this->send('GET', '/tokens/'. $tokenId);
+    }
+
+    public function updateToken($tokenId, array $content = []): ApiResponse
+    {
+        return $this->send('PUT', '/tokens/'. $tokenId, $content);
+    }
+
+    public function deleteToken($tokenId): ApiResponse
+    {
+        return $this->send('DELETE', '/tokens/'. $tokenId);
     }
 
     /************************************************************************
@@ -115,6 +146,11 @@ class RuwlerSdk
     public function getCampaign($campaignId): ApiResponse
     {
         return $this->send('GET', '/campaigns/'. $campaignId);
+    }
+
+    public function getCampaignStatistics($campaignId): ApiResponse
+    {
+        return $this->send('GET', '/campaigns/'. $campaignId .'/statistics');
     }
 
     public function updateCampaign($campaignId, array $content = []): ApiResponse
@@ -201,6 +237,11 @@ class RuwlerSdk
         return $this->send('GET', '/templates/'. $templateId);
     }
 
+    public function getTemplateStatistics($templateId): ApiResponse
+    {
+        return $this->send('GET', '/templates/'. $templateId .'/statistics');
+    }
+
     public function updateTemplate($templateId, array $content = []): ApiResponse
     {
         return $this->send('PUT', '/templates/'. $templateId, $content);
@@ -209,6 +250,36 @@ class RuwlerSdk
     public function deleteTemplate($templateId): ApiResponse
     {
         return $this->send('DELETE', '/templates/'. $templateId);
+    }
+
+
+    /************************************************************************
+     *                  Messages RESOURCE
+     ************************************************************************/
+
+    public function getMessages(array $filters = []): ApiResponse
+    {
+        return $this->send('GET', '/messages', null, $filters);
+    }
+
+    public function getMessage($messageId): ApiResponse
+    {
+        return $this->send('GET', '/messages/'. $messageId);
+    }
+
+
+    /************************************************************************
+     *                  Contacts RESOURCE
+     ************************************************************************/
+
+    public function getContacts(array $filters = []): ApiResponse
+    {
+        return $this->send('GET', '/contacts', null, $filters);
+    }
+
+    public function getContact($contactId): ApiResponse
+    {
+        return $this->send('GET', '/contacts/'. $contactId);
     }
 
 
@@ -256,7 +327,7 @@ class RuwlerSdk
 
     protected function createCurl($method, $path, $body = null, $queryParams = [])
     {
-        $full_url = sprintf('%s://%s%s', $this->settings['scheme'], $this->settings['host'], $path);
+        $full_url = sprintf('%s%s', $this->settings['host'], $path);
         $query_string = http_build_query($queryParams);
         $final_url = $full_url.'?'.$query_string;
 
@@ -283,7 +354,7 @@ class RuwlerSdk
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             sprintf('Content-Type: %s', $this->getContentType()),
             sprintf('Accept: %s', $this->getContentType()),
-            sprintf('Authorization: Bearer %s', $this->apiKey),
+            sprintf('Authorization: %s', $this->getAuthHeader()),
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->settings['timeout']);
@@ -352,5 +423,19 @@ class RuwlerSdk
         $this->apiKey = $apiKey;
 
         return $this;
+    }
+    
+    private function getAuthHeader(): string
+    {
+        switch ($this->settings['auth_mode']) {
+            case self::AUTH_MODE_APIKEY:
+                return $this->apiKey;
+                break;
+            case self::AUTH_MODE_TOKEN:
+                return 'Bearer '. $this->apiKey;
+                break;
+        }
+
+        throw new InvalidAuthModeException($this->settings['auth_mode']);
     }
 }
