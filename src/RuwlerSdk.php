@@ -119,6 +119,11 @@ class RuwlerSdk
         return $this->send('GET', '/projects/'. $projectId);
     }
 
+    public function getProjectHistory($projectId): ApiResponse
+    {
+        return $this->send('GET', '/projects/'. $projectId .'/history');
+    }
+
     public function updateProject($projectId, array $content = []): ApiResponse
     {
         return $this->send('PUT', '/projects/'. $projectId, $content);
