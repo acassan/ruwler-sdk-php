@@ -197,6 +197,35 @@ class RuwlerSdk
         return $this->send('DELETE', '/channels/'. $channelId);
     }
 
+    /************************************************************************
+     *                  CampaignChannels RESOURCE
+     ************************************************************************/
+
+    public function getCampaignChannels(array $filters = []): ApiResponse
+    {
+        return $this->send('GET', '/campaign_channels', null, $filters);
+    }
+
+    public function createCampaignChannel(array $content): ApiResponse
+    {
+        return $this->send('POST', '/campaign_channels', $content);
+    }
+
+    public function getCampaignChannel($campaignChannelId): ApiResponse
+    {
+        return $this->send('GET', '/campaign_channels/'. $campaignChannelId);
+    }
+
+    public function updateCampaignChannel($campaignChannelId, array $content = []): ApiResponse
+    {
+        return $this->send('PUT', '/campaign_channels/'. $campaignChannelId, $content);
+    }
+
+    public function deleteCampaignChannel($campaignChannelId): ApiResponse
+    {
+        return $this->send('DELETE', '/campaign_channels/'. $campaignChannelId);
+    }
+
 
     /************************************************************************
      *                  Providers RESOURCE
@@ -414,10 +443,10 @@ class RuwlerSdk
                 break;
             case self::FORMAT_JSON:
                 return 'application/json';
-            break;
+                break;
             case self::FORMAT_HTML:
                 return 'text/html';
-            break;
+                break;
             default:
                 throw new InvalidFormatException();
         }
@@ -429,7 +458,7 @@ class RuwlerSdk
 
         return $this;
     }
-    
+
     private function getAuthHeader(): string
     {
         switch ($this->settings['auth_mode']) {
