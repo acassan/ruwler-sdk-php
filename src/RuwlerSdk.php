@@ -288,6 +288,36 @@ class RuwlerSdk
 
 
     /************************************************************************
+     *                  Channel rate limits RESOURCE
+     ************************************************************************/
+
+    public function getChannelRateLimits(array $filters = []): ApiResponse
+    {
+        return $this->send('GET', '/channel_rate_limits', null, $filters);
+    }
+
+    public function createChannelRateLimits(array $content): ApiResponse
+    {
+        return $this->send('POST', '/channel_rate_limits', $content);
+    }
+
+    public function getChannelRateLimit($channelRateLimitId): ApiResponse
+    {
+        return $this->send('GET', '/channel_rate_limits/'. $channelRateLimitId);
+    }
+
+    public function updateChannelRateLimits($channelRateLimitId, array $content = []): ApiResponse
+    {
+        return $this->send('PUT', '/channel_rate_limits/'. $channelRateLimitId, $content);
+    }
+
+    public function deleteChannelRateLimits($channelRateLimitId): ApiResponse
+    {
+        return $this->send('DELETE', '/channel_rate_limits/'. $channelRateLimitId);
+    }
+
+
+    /************************************************************************
      *                  Messages RESOURCE
      ************************************************************************/
 
@@ -393,6 +423,9 @@ class RuwlerSdk
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->settings['timeout']);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+
+        curl_setopt($this->ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($this->ch, CURLOPT_SSL_VERIFYPEER, 0);
 
         if (!is_null($body)) {
             $json_encoded_body = json_encode($body);
